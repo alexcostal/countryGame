@@ -1,122 +1,140 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react"
+import { COUNTRIES } from "@/data/countries"
+import { Button } from "@/components/ui/button"
+import { AutocompleteInput } from "@/components/AutocompleteInput"
+import { CapitalAttempts, CountryAttempts } from "@/components/Attempts"
+import { CountrySilhouette } from "@/components/CountrySilhouette"
+import { MAX_CAPITAL_ATTEMPTS, MAX_COUNTRY_ATTEMPTS } from "@/game/gameReducer"
+import { normalize } from "@/game/geo"
+import type { Country } from "@/game/types"
+import { useGame } from "@/game/useGame"
+import { useGeometries } from "@/game/useGeometries"
 
-function App() {
-  const [count, setCount] = useState(0)
+const DOG_MS = 1800
+
+type Pending =
+  | { kind: "country"; country: Country }
+  | { kind: "capital"; name: string }
+
+const byName = (a: string, b: string) => a.localeCompare(b, "es")
+const COUNTRY_NAMES = COUNTRIES.map((c) => c.name).sort(byName)
+const CAPITAL_NAMES = [...new Set(COUNTRIES.map((c) => c.capital))].sort(byName)
+
+export default function App() {
+  const game = useGame(COUNTRIES)
+  const geometries = useGeometries()
+  const { state, guessCountry, guessCapital } = game
+  const [pending, setPending] = useState<Pending | null>(null)
+  const geometry = state.target ? geometries?.[state.target.code] : undefined
+
+  useEffect(() => {
+    if (!pending) return
+    const id = window.setTimeout(() => {
+      if (pending.kind === "country") guessCountry(pending.country)
+      else guessCapital(pending.name)
+      setPending(null)
+    }, DOG_MS)
+    return () => window.clearTimeout(id)
+  }, [pending, guessCountry, guessCapital])
+
+  function submitCountry(name: string) {
+    if (pending) return
+    const country = COUNTRIES.find((c) => c.name === name)
+    if (!country) return
+    if (state.countryGuesses.some((g) => g.country.code === country.code)) return
+    setPending({ kind: "country", country })
+  }
+
+  function submitCapital(name: string) {
+    if (pending) return
+    if (state.capitalGuesses.some((g) => normalize(g) === normalize(name))) return
+    setPending({ kind: "capital", name })
+  }
+
+  const showCapital =
+    state.capitalGuesses.length > 0 ||
+    state.phase === "capital" ||
+    state.phase === "solved"
+
+  if (state.phase === "complete") {
+    return <p className="p-4">Los tienes todos.</p>
+  }
+
+  const countryDone = state.phase === "countryDone"
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+    <div className="mx-auto flex min-h-dvh max-w-md flex-col gap-2 p-3">
+      <div className="flex h-[28dvh] items-center justify-center">
+        {geometry ? (
+          <CountrySilhouette
+            geometry={geometry}
+            className={`h-full w-full ${countryDone ? "pop" : ""}`}
+            marker={
+              showCapital && state.target
+                ? { lat: state.target.capitalLat, lng: state.target.capitalLng }
+                : undefined
+            }
+          />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {geometries === null ? "Cargando mapa…" : "Sin silueta para este país."}
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        )}
+      </div>
 
-      <div className="ticks"></div>
+      <p className="text-xs text-muted-foreground">
+        Prueba: {state.target?.name} / {state.target?.capital} · Pendientes:{" "}
+        {game.pendingCount}
+      </p>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {showCapital ? (
+        <CapitalAttempts
+          guesses={state.capitalGuesses}
+          max={MAX_CAPITAL_ATTEMPTS}
+          loadingMs={pending?.kind === "capital" ? DOG_MS : undefined}
+        />
+      ) : (
+        <CountryAttempts
+          guesses={state.countryGuesses}
+          max={MAX_COUNTRY_ATTEMPTS}
+          loadingMs={pending?.kind === "country" ? DOG_MS : undefined}
+          targetCode={state.target?.code}
+        />
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <div className="mt-auto flex flex-col gap-2">
+        {state.phase === "country" && (
+          <AutocompleteInput
+            options={COUNTRY_NAMES}
+            placeholder="País o territorio…"
+            submitLabel="Adivinar"
+            onSubmit={submitCountry}
+          />
+        )}
+
+        {state.phase === "countryDone" && (
+          <Button onClick={game.toCapital}>Siguiente</Button>
+        )}
+
+        {state.phase === "capital" && (
+          <AutocompleteInput
+            options={CAPITAL_NAMES}
+            placeholder="Capital…"
+            submitLabel="Adivinar capital"
+            onSubmit={submitCapital}
+          />
+        )}
+
+        {(state.phase === "solved" || state.phase === "failed") && (
+          <>
+            <p>
+              {state.phase === "solved" ? "Acertado" : "Fallado"}:{" "}
+              {state.target?.name} ({state.target?.capital})
+            </p>
+            <Button onClick={game.next}>Siguiente</Button>
+          </>
+        )}
+      </div>
+    </div>
   )
 }
-
-export default App
