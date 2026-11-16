@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useReducer } from "react"
-import type { Country } from "./types"
+import { useCallback, useEffect, useMemo, useReducer } from "react"
+import type { Country, GameState } from "./types"
 import {
   MAX_CAPITAL_ATTEMPTS,
   MAX_COUNTRY_ATTEMPTS,
   gameReducer,
 } from "./gameReducer"
+import { saveCompleted } from "./storage"
 
 function pickRandom(
   countries: Country[],
@@ -18,17 +19,28 @@ function pickRandom(
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
-export function useGame(countries: Country[], initialCompleted: string[] = []) {
-  const [state, dispatch] = useReducer(gameReducer, undefined, () => {
-    const target = pickRandom(countries, initialCompleted)
-    return {
-      target,
-      phase: target ? ("country" as const) : ("complete" as const),
-      countryGuesses: [],
-      capitalGuesses: [],
-      completed: initialCompleted,
-    }
-  })
+export function useGame(countries: Country[], savedCompleted: string[] = []) {
+  const [state, dispatch] = useReducer(
+    gameReducer,
+    undefined,
+    (): GameState => {
+      const completed = savedCompleted.filter((code) =>
+        countries.some((c) => c.code === code),
+      )
+      const target = pickRandom(countries, completed)
+      return {
+        target,
+        phase: target ? "country" : "complete",
+        countryGuesses: [],
+        capitalGuesses: [],
+        completed,
+      }
+    },
+  )
+
+  useEffect(() => {
+    saveCompleted(state.completed)
+  }, [state.completed])
 
   const pendingCount = useMemo(
     () => countries.filter((c) => !state.completed.includes(c.code)).length,
@@ -39,7 +51,6 @@ export function useGame(countries: Country[], initialCompleted: string[] = []) {
     (guess: Country) => dispatch({ type: "GUESS_COUNTRY", guess }),
     [],
   )
-
 
   const guessCapital = useCallback(
     (guess: string) => dispatch({ type: "GUESS_CAPITAL", guess }),

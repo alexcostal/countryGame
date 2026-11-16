@@ -96,7 +96,7 @@ export function AutocompleteInput({
                     autoCapitalize="off"
                     spellCheck={false}
                     enterKeyHint="go"
-                    className="h-11 text-base"
+                    className="h-11 text-base select-text cursor-text"
                 />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}

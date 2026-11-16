@@ -1,140 +1,19 @@
-import { useEffect, useState } from "react"
-import { COUNTRIES } from "@/data/countries"
-import { Button } from "@/components/ui/button"
-import { AutocompleteInput } from "@/components/AutocompleteInput"
-import { CapitalAttempts, CountryAttempts } from "@/components/Attempts"
-import { CountrySilhouette } from "@/components/CountrySilhouette"
-import { MAX_CAPITAL_ATTEMPTS, MAX_COUNTRY_ATTEMPTS } from "@/game/gameReducer"
-import { normalize } from "@/game/geo"
-import type { Country } from "@/game/types"
-import { useGame } from "@/game/useGame"
-import { useGeometries } from "@/game/useGeometries"
+import { useState } from "react"
+import GameScreen from "@/screens/GameScreen"
+import HomeScreen from "@/screens/HomeScreen"
+import SettingsScreen from "@/screens/SettingsScreen"
 
-const DOG_MS = 1800
-
-type Pending =
-  | { kind: "country"; country: Country }
-  | { kind: "capital"; name: string }
-
-const byName = (a: string, b: string) => a.localeCompare(b, "es")
-const COUNTRY_NAMES = COUNTRIES.map((c) => c.name).sort(byName)
-const CAPITAL_NAMES = [...new Set(COUNTRIES.map((c) => c.capital))].sort(byName)
+type Screen = "home" | "game" | "settings"
 
 export default function App() {
-  const game = useGame(COUNTRIES)
-  const geometries = useGeometries()
-  const { state, guessCountry, guessCapital } = game
-  const [pending, setPending] = useState<Pending | null>(null)
-  const geometry = state.target ? geometries?.[state.target.code] : undefined
+  const [screen, setScreen] = useState<Screen>("home")
 
-  useEffect(() => {
-    if (!pending) return
-    const id = window.setTimeout(() => {
-      if (pending.kind === "country") guessCountry(pending.country)
-      else guessCapital(pending.name)
-      setPending(null)
-    }, DOG_MS)
-    return () => window.clearTimeout(id)
-  }, [pending, guessCountry, guessCapital])
-
-  function submitCountry(name: string) {
-    if (pending) return
-    const country = COUNTRIES.find((c) => c.name === name)
-    if (!country) return
-    if (state.countryGuesses.some((g) => g.country.code === country.code)) return
-    setPending({ kind: "country", country })
-  }
-
-  function submitCapital(name: string) {
-    if (pending) return
-    if (state.capitalGuesses.some((g) => normalize(g) === normalize(name))) return
-    setPending({ kind: "capital", name })
-  }
-
-  const showCapital =
-    state.capitalGuesses.length > 0 ||
-    state.phase === "capital" ||
-    state.phase === "solved"
-
-  if (state.phase === "complete") {
-    return <p className="p-4">Los tienes todos.</p>
-  }
-
-  const countryDone = state.phase === "countryDone"
-
+  if (screen === "game") return <GameScreen onHome={() => setScreen("home")} />
+  if (screen === "settings") return <SettingsScreen onBack={() => setScreen("home")} />
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col gap-2 p-3">
-      <div className="flex h-[28dvh] items-center justify-center">
-        {geometry ? (
-          <CountrySilhouette
-            geometry={geometry}
-            className={`h-full w-full ${countryDone ? "pop" : ""}`}
-            marker={
-              showCapital && state.target
-                ? { lat: state.target.capitalLat, lng: state.target.capitalLng }
-                : undefined
-            }
-          />
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            {geometries === null ? "Cargando mapa…" : "Sin silueta para este país."}
-          </p>
-        )}
-      </div>
-
-      <p className="text-xs text-muted-foreground">
-        Prueba: {state.target?.name} / {state.target?.capital} · Pendientes:{" "}
-        {game.pendingCount}
-      </p>
-
-      {showCapital ? (
-        <CapitalAttempts
-          guesses={state.capitalGuesses}
-          max={MAX_CAPITAL_ATTEMPTS}
-          loadingMs={pending?.kind === "capital" ? DOG_MS : undefined}
-        />
-      ) : (
-        <CountryAttempts
-          guesses={state.countryGuesses}
-          max={MAX_COUNTRY_ATTEMPTS}
-          loadingMs={pending?.kind === "country" ? DOG_MS : undefined}
-          targetCode={state.target?.code}
-        />
-      )}
-
-      <div className="mt-auto flex flex-col gap-2">
-        {state.phase === "country" && (
-          <AutocompleteInput
-            options={COUNTRY_NAMES}
-            placeholder="País o territorio…"
-            submitLabel="Adivinar"
-            onSubmit={submitCountry}
-          />
-        )}
-
-        {state.phase === "countryDone" && (
-          <Button onClick={game.toCapital}>Siguiente</Button>
-        )}
-
-        {state.phase === "capital" && (
-          <AutocompleteInput
-            options={CAPITAL_NAMES}
-            placeholder="Capital…"
-            submitLabel="Adivinar capital"
-            onSubmit={submitCapital}
-          />
-        )}
-
-        {(state.phase === "solved" || state.phase === "failed") && (
-          <>
-            <p>
-              {state.phase === "solved" ? "Acertado" : "Fallado"}:{" "}
-              {state.target?.name} ({state.target?.capital})
-            </p>
-            <Button onClick={game.next}>Siguiente</Button>
-          </>
-        )}
-      </div>
-    </div>
+    <HomeScreen
+      onPlay={() => setScreen("game")}
+      onSettings={() => setScreen("settings")}
+    />
   )
 }
