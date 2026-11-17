@@ -95,11 +95,13 @@ function Globe() {
 }
 
 export default function HomeScreen({
-    onPlay,
-    onSettings,
+  onPlay,
+  onSettings,
+  onProgress,
 }: {
-    onPlay: () => void
-    onSettings: () => void
+  onPlay: () => void
+  onSettings: () => void
+  onProgress: () => void
 }) {
     return (
         <main
@@ -165,7 +167,7 @@ export default function HomeScreen({
                 </button>
 
                 <div className="mt-4 flex w-full items-center justify-between gap-3">
-                    <button type="button" aria-label="Progreso" className={iconBtn}>
+                    <button type="button" aria-label="Progreso" onClick={onProgress} className={iconBtn}>
                         <Trophy className="h-5 w-5" />
                     </button>
                     <p className="text-center text-xs text-sky-200/60">{TEXT.footer}</p>

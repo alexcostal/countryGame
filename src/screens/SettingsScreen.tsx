@@ -18,7 +18,6 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
   const [completed, setCompleted] = useState<string[]>(loadCompleted)
   const [importText, setImportText] = useState("")
   const [message, setMessage] = useState("")
-  const [confirmReset, setConfirmReset] = useState(false)
 
   const exportText = exportProgress(completed)
   const total = COUNTRIES.length
@@ -48,17 +47,6 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
     setMessage(
       added > 0 ? `Importados ${added} países nuevos.` : "Ya los tenías todos.",
     )
-  }
-
-  function reset() {
-    if (!confirmReset) {
-      setConfirmReset(true)
-      return
-    }
-    saveCompleted([])
-    setCompleted([])
-    setConfirmReset(false)
-    setMessage("Progreso borrado.")
   }
 
   return (
@@ -127,16 +115,6 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
           />
           <button type="button" onClick={importProgress} className={btn}>
             Importar
-          </button>
-        </section>
-
-        <section>
-          <button
-            type="button"
-            onClick={reset}
-            className="h-12 w-full rounded-xl border border-red-400/40 bg-red-500/10 px-4 text-base font-semibold text-red-300 active:bg-red-500/20"
-          >
-            {confirmReset ? "Pulsa otra vez para borrar todo" : "Borrar progreso"}
           </button>
         </section>
       </div>

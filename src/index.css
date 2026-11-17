@@ -193,15 +193,15 @@
 }
 
 .dog-leg-a {
-  animation: dog-leg-a 0.3s ease-in-out infinite;
+  animation: dog-leg-a 0.5s ease-in-out infinite;
 }
 
 .dog-leg-b {
-  animation: dog-leg-b 0.3s ease-in-out infinite;
+  animation: dog-leg-b 0.5s ease-in-out infinite;
 }
 
 .dog-tail {
-  animation: dog-tail 0.25s ease-in-out infinite;
+  animation: dog-tail 0.35s ease-in-out infinite;
 }
 
 .dog-run {
