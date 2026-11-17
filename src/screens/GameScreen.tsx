@@ -6,7 +6,7 @@ import { CapitalAttempts, CountryAttempts } from "@/components/Attempts"
 import { CountrySilhouette } from "@/components/CountrySilhouette"
 import { MAX_CAPITAL_ATTEMPTS, MAX_COUNTRY_ATTEMPTS } from "@/game/gameReducer"
 import { normalize } from "@/game/geo"
-import { loadCompleted } from "@/game/storage"
+import { loadRecords } from "@/game/storage"
 import type { Country } from "@/game/types"
 import { useGame } from "@/game/useGame"
 import { useGeometries } from "@/game/useGeometries"
@@ -22,7 +22,7 @@ const COUNTRY_NAMES = COUNTRIES.map((c) => c.name).sort(byName)
 const CAPITAL_NAMES = [...new Set(COUNTRIES.map((c) => c.capital))].sort(byName)
 
 export default function GameScreen({ onHome }: { onHome: () => void }) {
-  const [saved] = useState(loadCompleted)
+  const [saved] = useState(loadRecords)
   const game = useGame(COUNTRIES, saved)
   const geometries = useGeometries()
   const { state, guessCountry, guessCapital } = game

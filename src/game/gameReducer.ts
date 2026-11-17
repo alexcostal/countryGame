@@ -1,8 +1,13 @@
-import type { GameAction, GameState } from "./types"
+import type { GameAction, GameState, Records } from "./types"
 import { bearingDeg, distanceKm, normalize, proximityPct } from "./geo"
 
 export const MAX_COUNTRY_ATTEMPTS = 7
 export const MAX_CAPITAL_ATTEMPTS = 5
+
+function bumpFails(records: Records, code: string): Records {
+  const current = records[code]
+  return { ...records, [code]: { ...current, fails: (current?.fails ?? 0) + 1 } }
+}
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -27,10 +32,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (action.guess.code === target.code) {
         return { ...state, countryGuesses, phase: "countryDone" }
       }
+
+      const lost = countryGuesses.length >= MAX_COUNTRY_ATTEMPTS
       return {
         ...state,
         countryGuesses,
-        phase: countryGuesses.length >= MAX_COUNTRY_ATTEMPTS ? "failed" : "country",
+        phase: lost ? "failed" : "country",
+        records: lost ? bumpFails(state.records, target.code) : state.records,
       }
     }
 
@@ -51,17 +59,31 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const capitalGuesses = [...state.capitalGuesses, guess]
 
       if (normalize(guess) === normalize(target.capital)) {
+        const previous = state.records[target.code]
         return {
           ...state,
           capitalGuesses,
           phase: "solved",
-          completed: [...state.completed, target.code],
+          records: {
+            ...state.records,
+            [target.code]: {
+              fails: previous?.fails ?? 0,
+              done: {
+                at: action.today,
+                countryTries: state.countryGuesses.length,
+                capitalTries: capitalGuesses.length,
+              },
+            },
+          },
         }
       }
+
+      const lost = capitalGuesses.length >= MAX_CAPITAL_ATTEMPTS
       return {
         ...state,
         capitalGuesses,
-        phase: capitalGuesses.length >= MAX_CAPITAL_ATTEMPTS ? "failed" : "capital",
+        phase: lost ? "failed" : "capital",
+        records: lost ? bumpFails(state.records, target.code) : state.records,
       }
     }
 

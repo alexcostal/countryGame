@@ -24,16 +24,29 @@ export interface CountryGuess {
   proximity: number
 }
 
+export interface DoneInfo {
+  at?: string
+  countryTries?: number
+  capitalTries?: number
+}
+
+export interface CountryRecord {
+  fails: number
+  done?: DoneInfo
+}
+
+export type Records = Record<string, CountryRecord>
+
 export interface GameState {
   target: Country | null
   phase: Phase
   countryGuesses: CountryGuess[]
   capitalGuesses: string[]
-  completed: string[]
+  records: Records
 }
 
 export type GameAction =
   | { type: "GUESS_COUNTRY"; guess: Country }
   | { type: "TO_CAPITAL" }
-  | { type: "GUESS_CAPITAL"; guess: string }
+  | { type: "GUESS_CAPITAL"; guess: string; today: string }
   | { type: "NEXT"; target: Country | null }

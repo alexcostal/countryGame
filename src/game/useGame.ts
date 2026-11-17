@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useReducer } from "react"
-import type { Country, GameState } from "./types"
+import type { Country, GameState, Records } from "./types"
 import {
   MAX_CAPITAL_ATTEMPTS,
   MAX_COUNTRY_ATTEMPTS,
   gameReducer,
 } from "./gameReducer"
-import { saveCompleted } from "./storage"
+import { completedCodes, saveRecords } from "./storage"
 
 function pickRandom(
   countries: Country[],
@@ -19,33 +19,37 @@ function pickRandom(
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
-export function useGame(countries: Country[], savedCompleted: string[] = []) {
+function todayString(): string {
+  const d = new Date()
+  const month = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${d.getFullYear()}-${month}-${day}`
+}
+
+export function useGame(countries: Country[], savedRecords: Records = {}) {
   const [state, dispatch] = useReducer(
     gameReducer,
     undefined,
     (): GameState => {
-      const completed = savedCompleted.filter((code) =>
-        countries.some((c) => c.code === code),
-      )
-      const target = pickRandom(countries, completed)
+      const target = pickRandom(countries, completedCodes(savedRecords))
       return {
         target,
         phase: target ? "country" : "complete",
         countryGuesses: [],
         capitalGuesses: [],
-        completed,
+        records: savedRecords,
       }
     },
   )
 
   useEffect(() => {
-    saveCompleted(state.completed)
-  }, [state.completed])
+    saveRecords(state.records)
+  }, [state.records])
 
-  const pendingCount = useMemo(
-    () => countries.filter((c) => !state.completed.includes(c.code)).length,
-    [countries, state.completed],
-  )
+  const pendingCount = useMemo(() => {
+    const done = completedCodes(state.records)
+    return countries.filter((c) => !done.includes(c.code)).length
+  }, [countries, state.records])
 
   const guessCountry = useCallback(
     (guess: Country) => dispatch({ type: "GUESS_COUNTRY", guess }),
@@ -53,7 +57,8 @@ export function useGame(countries: Country[], savedCompleted: string[] = []) {
   )
 
   const guessCapital = useCallback(
-    (guess: string) => dispatch({ type: "GUESS_CAPITAL", guess }),
+    (guess: string) =>
+      dispatch({ type: "GUESS_CAPITAL", guess, today: todayString() }),
     [],
   )
 
@@ -63,9 +68,13 @@ export function useGame(countries: Country[], savedCompleted: string[] = []) {
     () =>
       dispatch({
         type: "NEXT",
-        target: pickRandom(countries, state.completed, state.target?.code),
+        target: pickRandom(
+          countries,
+          completedCodes(state.records),
+          state.target?.code,
+        ),
       }),
-    [countries, state.completed, state.target],
+    [countries, state.records, state.target],
   )
 
   return {

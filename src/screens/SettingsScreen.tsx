@@ -2,11 +2,14 @@ import { useState } from "react"
 import { ArrowLeft } from "lucide-react"
 import { COUNTRIES } from "@/data/countries"
 import {
+  completedCodes,
   exportProgress,
-  loadCompleted,
+  loadRecords,
+  mergeRecords,
   parseProgress,
-  saveCompleted,
+  saveRecords,
 } from "@/game/storage"
+import type { Records } from "@/game/types"
 
 const btn =
   "h-12 w-full rounded-xl bg-white/10 px-4 text-base font-semibold active:bg-white/20"
@@ -15,11 +18,12 @@ const box =
 const title = "text-sm font-semibold text-sky-200/80"
 
 export default function SettingsScreen({ onBack }: { onBack: () => void }) {
-  const [completed, setCompleted] = useState<string[]>(loadCompleted)
+  const [records, setRecords] = useState<Records>(loadRecords)
   const [importText, setImportText] = useState("")
   const [message, setMessage] = useState("")
 
-  const exportText = exportProgress(completed)
+  const completed = completedCodes(records)
+  const exportText = exportProgress(records)
   const total = COUNTRIES.length
   const pct = total ? Math.round((completed.length / total) * 100) : 0
 
@@ -33,16 +37,19 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
   }
 
   function importProgress() {
-    const codes = parseProgress(importText)
-    if (!codes) {
+    const incoming = parseProgress(importText)
+    if (!incoming) {
       setMessage("Ese texto no es una partida válida.")
       return
     }
-    const valid = codes.filter((c) => COUNTRIES.some((x) => x.code === c))
-    const merged = [...new Set([...completed, ...valid])]
-    const added = merged.length - completed.length
-    saveCompleted(merged)
-    setCompleted(merged)
+    const valid: Records = {}
+    for (const [code, record] of Object.entries(incoming)) {
+      if (COUNTRIES.some((c) => c.code === code)) valid[code] = record
+    }
+    const merged = mergeRecords(records, valid)
+    const added = completedCodes(merged).length - completed.length
+    saveRecords(merged)
+    setRecords(merged)
     setImportText("")
     setMessage(
       added > 0 ? `Importados ${added} países nuevos.` : "Ya los tenías todos.",
@@ -110,7 +117,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
             rows={3}
             value={importText}
             onChange={(e) => setImportText(e.target.value)}
-            placeholder="countrygame1:ES,FR,JP"
+            placeholder="countrygame2:ES:1:3:1:0:20261117"
             className={box}
           />
           <button type="button" onClick={importProgress} className={btn}>
