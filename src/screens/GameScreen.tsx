@@ -3,9 +3,12 @@ import { COUNTRIES } from "@/data/countries"
 import { Button } from "@/components/ui/button"
 import { AutocompleteInput } from "@/components/AutocompleteInput"
 import { CapitalAttempts, CountryAttempts } from "@/components/Attempts"
+import { Confetti } from "@/components/Confetti"
 import { CountrySilhouette } from "@/components/CountrySilhouette"
+import { FailBanner } from "@/components/FailBanner"
 import { MAX_CAPITAL_ATTEMPTS, MAX_COUNTRY_ATTEMPTS } from "@/game/gameReducer"
 import { normalize } from "@/game/geo"
+import { NO_MARKER, SHOW_ALL } from "@/game/markers"
 import { loadRecords } from "@/game/storage"
 import type { Country } from "@/game/types"
 import { useGame } from "@/game/useGame"
@@ -69,9 +72,30 @@ export default function GameScreen({ onHome }: { onHome: () => void }) {
 
   const celebrate = state.phase === "countryDone" || state.phase === "solved"
   const failed = state.phase === "failed"
+  const failedCapital = failed && state.capitalGuesses.length > 0
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col gap-3 px-3 pt-[calc(env(safe-area-inset-top)_+_0.75rem)] pb-[calc(env(safe-area-inset-bottom)_+_0.75rem)] select-none cursor-default">
+      {(state.phase === "countryDone" || state.phase === "solved") && (
+        <Confetti key={`${state.target?.code}-${state.phase}`} count={60} />
+      )}
+
+      {failed && state.target && (
+        <FailBanner
+          key={state.target.code}
+          title={
+            failedCapital
+              ? `La capital era ${state.target.capital}`
+              : `Era ${state.target.name}`
+          }
+          detail={
+            failedCapital
+              ? `Fallaste la capital de ${state.target.name}`
+              : "Fallaste el país"
+          }
+        />
+      )}
+
       <button
         type="button"
         onClick={onHome}
@@ -85,9 +109,15 @@ export default function GameScreen({ onHome }: { onHome: () => void }) {
           {geometry ? (
             <CountrySilhouette
               geometry={geometry}
+              showAll={state.target ? SHOW_ALL.has(state.target.code) : false}
               className={`h-full w-full ${celebrate ? "pop" : ""} ${failed ? "shake" : ""}`}
+              focus={
+                state.target
+                  ? { lat: state.target.capitalLat, lng: state.target.capitalLng }
+                  : undefined
+              }
               marker={
-                showCapital && state.target
+                showCapital && state.target && !NO_MARKER.has(state.target.code)
                   ? { lat: state.target.capitalLat, lng: state.target.capitalLng }
                   : undefined
               }

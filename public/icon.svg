@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="o" cx="35%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#6fd6ff"/>
+      <stop offset="0.55" stop-color="#1f93e6"/>
+      <stop offset="1" stop-color="#0b5aa8"/>
+    </radialGradient>
+    <clipPath id="c"><circle cx="256" cy="256" r="178"/></clipPath>
+  </defs>
+  <rect width="512" height="512" fill="#0e2250"/>
+  <circle cx="256" cy="256" r="190" fill="#e8f4ff" fill-opacity="0.9"/>
+  <circle cx="256" cy="256" r="178" fill="url(#o)"/>
+  <g clip-path="url(#c)" stroke-width="14" stroke-linejoin="round">
+    <polygon points="127,173 165,150 192,169 180,203 142,207" fill="#8fdc4c" stroke="#8fdc4c"/>
+    <polygon points="267,116 332,108 381,146 366,195 313,192 275,169" fill="#b3e955" stroke="#b3e955"/>
+    <polygon points="336,222 381,214 404,267 381,343 343,362 324,298" fill="#9be04b" stroke="#9be04b"/>
+    <polygon points="142,317 188,305 207,339 180,373 146,358" fill="#7fd04a" stroke="#7fd04a"/>
+    <polygon points="222,237 256,226 271,264 245,294 214,275" fill="#8fdc4c" stroke="#8fdc4c"/>
+  </g>
+</svg>
