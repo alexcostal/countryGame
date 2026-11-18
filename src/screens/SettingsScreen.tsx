@@ -124,6 +124,9 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
             Importar
           </button>
         </section>
+        <p className="text-center text-xs text-white/40">
+          Versión {__APP_VERSION__}
+        </p>
       </div>
     </main>
   )

@@ -4,11 +4,16 @@ import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
+const buildDate = new Date()
+  .toLocaleString("sv-SE", { timeZone: "Europe/Madrid" })
+  .slice(0, 16)
+
 export default defineConfig(({ command, isPreview }) => {
   const base = command === "build" || isPreview ? "/countryGame/" : "/"
 
   return {
     base,
+    define: { __APP_VERSION__: JSON.stringify(buildDate) },
     plugins: [
       react(),
       tailwindcss(),
