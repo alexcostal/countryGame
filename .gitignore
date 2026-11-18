@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 
 raw.geojson
+
+raw-land.geojson
+
+raw-land.geojson

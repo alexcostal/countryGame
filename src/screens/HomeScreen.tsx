@@ -1,4 +1,5 @@
 import { Settings, Trophy } from "lucide-react"
+import { Globe } from "@/components/Globe"
 
 const TEXT = {
     tagline: "EXPLORA · JUEGA",
@@ -39,57 +40,6 @@ function Cloud({ className }: { className: string }) {
             <circle cx="32" cy="15" r="13" />
             <circle cx="49" cy="22" r="10" />
             <rect x="10" y="20" width="44" height="12" rx="6" />
-        </svg>
-    )
-}
-
-function Globe() {
-    return (
-        <svg viewBox="0 0 260 260" className="h-full w-full" aria-hidden="true">
-            <defs>
-                <radialGradient id="ocean" cx="35%" cy="30%" r="80%">
-                    <stop offset="0%" stopColor="#6fd6ff" />
-                    <stop offset="55%" stopColor="#1f93e6" />
-                    <stop offset="100%" stopColor="#0b5aa8" />
-                </radialGradient>
-                <clipPath id="globe-clip">
-                    <circle cx="130" cy="130" r="92" />
-                </clipPath>
-            </defs>
-
-            <circle cx="130" cy="130" r="126" fill="#4aa8ff" fillOpacity="0.1" />
-            <circle cx="130" cy="130" r="112" fill="#4aa8ff" fillOpacity="0.12" />
-            <ellipse
-                cx="130"
-                cy="136"
-                rx="128"
-                ry="30"
-                fill="none"
-                stroke="#ffffff"
-                strokeOpacity="0.28"
-                strokeWidth="1.5"
-                transform="rotate(-14 130 136)"
-            />
-            <circle cx="130" cy="130" r="100" fill="#e8f4ff" fillOpacity="0.9" />
-            <circle cx="130" cy="130" r="94" fill="url(#ocean)" />
-
-            <g clipPath="url(#globe-clip)" strokeWidth="8" strokeLinejoin="round">
-                <polygon points="62,86 82,74 96,84 90,102 70,104" fill="#8fdc4c" stroke="#8fdc4c" />
-                <polygon points="136,56 170,52 196,72 188,98 160,96 140,84" fill="#b3e955" stroke="#b3e955" />
-                <polygon points="172,112 196,108 208,136 196,176 176,186 166,152" fill="#9be04b" stroke="#9be04b" />
-                <polygon points="70,162 94,156 104,174 90,192 72,184" fill="#7fd04a" stroke="#7fd04a" />
-                <polygon points="112,120 130,114 138,134 124,150 108,140" fill="#8fdc4c" stroke="#8fdc4c" />
-                <ellipse
-                    cx="92"
-                    cy="72"
-                    rx="34"
-                    ry="14"
-                    fill="#ffffff"
-                    fillOpacity="0.3"
-                    stroke="none"
-                    transform="rotate(-28 92 72)"
-                />
-            </g>
         </svg>
     )
 }

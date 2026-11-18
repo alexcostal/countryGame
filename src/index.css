@@ -377,3 +377,14 @@
   .confetti-piece { display: none; }
   .banner-rise { animation-name: banner-fade; }
 }
+@keyframes earth-spin {
+  from { transform: translateX(-360px); }
+  to { transform: translateX(0); }
+}
+.earth-map {
+  animation: earth-spin 80s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .earth-map { animation: none; }
+}
