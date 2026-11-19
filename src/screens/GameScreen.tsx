@@ -130,8 +130,9 @@ export default function GameScreen({ onHome }: { onHome: () => void }) {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Prueba: {state.target?.name} / {state.target?.capital} · Pendientes:{" "}
-          {game.pendingCount}
+          {import.meta.env.DEV &&
+            `Prueba: ${state.target?.name} / ${state.target?.capital} · `}
+          Pendientes: {game.pendingCount}
         </p>
 
         {showCapital ? (
