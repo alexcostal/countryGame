@@ -13,6 +13,7 @@ import { loadRecords } from "@/game/storage"
 import type { Country } from "@/game/types"
 import { useGame } from "@/game/useGame"
 import { useGeometries } from "@/game/useGeometries"
+import { SuccessBanner } from "@/components/SuccessBanner"
 
 const DOG_MS = 2600
 
@@ -93,6 +94,13 @@ export default function GameScreen({ onHome }: { onHome: () => void }) {
               ? `Fallaste la capital de ${state.target.name}`
               : "Fallaste el país"
           }
+        />
+      )}
+      {state.phase === "solved" && state.target && (
+        <SuccessBanner
+          key={`${state.target.code}-solved`}
+          title="¡Acertado!"
+          detail={`${state.target.name} · ${state.target.capital}`}
         />
       )}
 
@@ -179,10 +187,6 @@ export default function GameScreen({ onHome }: { onHome: () => void }) {
 
         {(state.phase === "solved" || state.phase === "failed") && (
           <>
-            <p>
-              {state.phase === "solved" ? "Acertado" : "Fallado"}:{" "}
-              {state.target?.name} ({state.target?.capital})
-            </p>
             <Button
               onClick={game.next}
               className={
