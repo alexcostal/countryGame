@@ -1,7 +1,9 @@
-import type { Geometry } from "./shapes"
+import type { Geometry, Polygon } from "./shapes"
 
 const STEP = 0.08
 const SKIP = new Set(["AQ"])
+const MIN_AREA = 0.5
+const SMALL_AREA = 6
 
 function ringToPath(ring: number[][]): string {
   const pts: number[][] = []
@@ -23,14 +25,41 @@ function ringToPath(ring: number[][]): string {
   return `M${coords.join("L")}Z`
 }
 
-export function buildWorldPaths(geometries: Record<string, Geometry>) {
-  const result: { code: string; d: string }[] = []
+function bboxArea(ring: number[][]): number {
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+  for (const [x, y] of ring) {
+    if (x < minX) minX = x
+    if (x > maxX) maxX = x
+    if (y < minY) minY = y
+    if (y > maxY) maxY = y
+  }
+  return (maxX - minX) * (maxY - minY)
+}
+
+export interface WorldPath {
+  code: string
+  d: string
+  small: boolean
+}
+
+export function buildWorldPaths(
+  geometries: Record<string, Geometry>,
+): WorldPath[] {
+  const result: WorldPath[] = []
   for (const [code, geometry] of Object.entries(geometries)) {
     if (SKIP.has(code)) continue
-    const polygons =
+    const polygons: Polygon[] =
       geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates
-    const d = polygons.flatMap((polygon) => polygon.map(ringToPath)).join("")
-    if (d) result.push({ code, d })
+    const areas = polygons.map((p) => bboxArea(p[0]))
+    const largest = Math.max(...areas)
+    const kept = polygons.filter(
+      (_, i) => areas[i] >= MIN_AREA || areas[i] === largest,
+    )
+    const d = kept.flatMap((polygon) => polygon.map(ringToPath)).join("")
+    if (d) result.push({ code, d, small: largest < SMALL_AREA })
   }
   return result
 }
