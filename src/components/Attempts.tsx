@@ -3,8 +3,8 @@ import { DirectionArrow } from "@/components/DirectionArrow"
 import { DogRow } from "@/components/DogRow"
 import { normalize } from "@/game/geo"
 
-const cell = "flex h-9 items-center justify-center rounded-md border px-2 text-sm"
-const empty = "h-9 rounded-md bg-muted"
+const cell = "flex h-11 items-center justify-center rounded-xl border px-2 text-sm"
+const empty = "h-11 rounded-xl bg-muted"
 const green = "border-green-600 bg-green-500/10 text-green-700 dark:text-green-400"
 const red = "border-red-600 bg-red-500/10 text-red-700 dark:text-red-400"
 

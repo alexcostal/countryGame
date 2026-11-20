@@ -1,4 +1,5 @@
 import { useState } from "react"
+import CompleteScreen from "@/screens/CompleteScreen"
 import GameScreen from "@/screens/GameScreen"
 import Gallery from "@/screens/Gallery"
 import HomeScreen from "@/screens/HomeScreen"
@@ -7,20 +8,19 @@ import SettingsScreen from "@/screens/SettingsScreen"
 
 type Screen = "home" | "game" | "settings" | "map"
 
+const noop = () => {}
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>("home")
   const goHome = () => setScreen("home")
+  const params = new URLSearchParams(window.location.search)
 
-  if (
-    import.meta.env.DEV &&
-    new URLSearchParams(window.location.search).has("galeria")
-  ) {
-    return <Gallery />
+  if (import.meta.env.DEV && params.has("galeria")) return <Gallery />
+  if (import.meta.env.DEV && params.has("final")) {
+    return <CompleteScreen onMap={noop} onHome={noop} />
   }
 
-  if (screen === "game") {
-    return <GameScreen onHome={goHome} />
-  }
+  if (screen === "game") return <GameScreen onHome={goHome} />
   if (screen === "settings") return <SettingsScreen onBack={goHome} />
   if (screen === "map") return <MapScreen onBack={goHome} />
   return (

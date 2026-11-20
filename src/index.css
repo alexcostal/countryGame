@@ -388,3 +388,81 @@
 @media (prefers-reduced-motion: reduce) {
   .earth-map { animation: none; }
 }
+
+@keyframes dog-jump {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(-26px); }
+  60% { transform: translateY(0); }
+  75% { transform: translateY(-9px); }
+  88% { transform: translateY(0); }
+}
+.dog-jump { animation: dog-jump 1s ease-out infinite; }
+
+@keyframes reveal-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.reveal-in { animation: reveal-in 0.6s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dog-jump { animation: none; }
+  .reveal-in { animation: none; }
+}
+
+@keyframes dog-turn {
+  0% {
+    opacity: 0;
+    transform: perspective(800px) translateY(30px) scale(0.7) rotateY(0deg);
+  }
+  15% {
+    opacity: 1;
+    transform: perspective(800px) translateY(0) scale(1) rotateY(0deg);
+  }
+  25% {
+    opacity: 1;
+    transform: perspective(800px) translateY(-18px) scale(1) rotateY(0deg);
+  }
+  70% {
+    opacity: 1;
+    transform: perspective(800px) translateY(-18px) scale(1) rotateY(360deg);
+  }
+  82% {
+    opacity: 1;
+    transform: perspective(800px) translateY(0) scale(1) rotateY(360deg);
+  }
+  100% {
+    opacity: 0;
+    transform: perspective(800px) translateY(0) scale(0.9) rotateY(360deg);
+  }
+}
+.dog-turn {
+  animation-name: dog-turn;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dog-turn { animation: none; }
+}
+
+
+@keyframes dog-run {
+  from { left: calc(var(--dog-w) * -1); }
+  to { left: 100%; }
+}
+@keyframes dog-frames {
+  to { background-position-x: calc(var(--dog-w) * var(--dog-n) * -1); }
+}
+.dog-run {
+  animation-name: dog-run;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+.dog-sprite {
+  background-repeat: no-repeat;
+  animation: dog-frames 0.6s steps(var(--dog-n)) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dog-sprite { animation: none; }
+}
