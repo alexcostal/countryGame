@@ -3,6 +3,7 @@ import type { PointerEvent as RPointerEvent, WheelEvent as RWheelEvent } from "r
 import { ArrowLeft, Minus, Plus } from "lucide-react"
 import { COUNTRIES } from "@/data/countries"
 import { CountrySheet } from "@/components/CountrySheet"
+import { SpinningGlobe } from "@/components/SpinningGlobe"
 import { WorldMap } from "@/components/WorldMap"
 import { completedCodes, loadRecords } from "@/game/storage"
 import { useGeometries } from "@/game/useGeometries"
@@ -15,6 +16,8 @@ const MAX_Z = 24
 const TAP_PX = 8
 const TAP_MS = 500
 const BY_CODE = new Map(COUNTRIES.map((c) => [c.code, c]))
+
+type Mode = "globe" | "flat"
 
 interface View {
   cx: number
@@ -63,11 +66,17 @@ function anchored(mapPt: Pt, p: Pt, z: number, w: number, h: number): View {
 const zoomBtn =
   "flex h-11 w-11 items-center justify-center rounded-xl bg-[#0e2250] text-white shadow-md active:bg-[#16306e]"
 
+function tab(active: boolean) {
+  return `h-10 flex-1 rounded-full text-sm font-medium ${active ? "bg-white text-[#0e2250]" : "text-white/80 active:bg-white/10"
+    }`
+}
+
 export default function MapScreen({ onBack }: { onBack: () => void }) {
   const geometries = useGeometries()
   const [records] = useState(loadRecords)
   const completed = useMemo(() => completedCodes(records), [records])
   const [selected, setSelected] = useState<string | null>(null)
+  const [mode, setMode] = useState<Mode>("flat")
 
   const box = useRef<HTMLDivElement>(null)
   const svg = useRef<SVGSVGElement>(null)
@@ -98,11 +107,19 @@ export default function MapScreen({ onBack }: { onBack: () => void }) {
   )
 
   useEffect(() => {
+    if (mode !== "flat") return
     apply(view.current)
     const onResize = () => apply(view.current)
     window.addEventListener("resize", onResize)
     return () => window.removeEventListener("resize", onResize)
-  }, [apply, geometries])
+  }, [apply, geometries, mode])
+
+  function switchMode(next: Mode) {
+    pointers.current.clear()
+    gesture.current = null
+    setSelected(null)
+    setMode(next)
+  }
 
   function rel(e: { clientX: number; clientY: number }): Pt {
     const { left, top } = size()
@@ -216,6 +233,23 @@ export default function MapScreen({ onBack }: { onBack: () => void }) {
         </div>
       </header>
 
+      <div className="flex gap-1 rounded-full border border-white/15 p-1">
+        <button
+          type="button"
+          onClick={() => switchMode("flat")}
+          className={tab(mode === "flat")}
+        >
+          Mapa
+        </button>
+        <button
+          type="button"
+          onClick={() => switchMode("globe")}
+          className={tab(mode === "globe")}
+        >
+          Globo
+        </button>
+      </div>
+
       {geometries === null && (
         <p className="p-4 text-sm text-sky-200/80">Cargando mapa…</p>
       )}
@@ -223,7 +257,34 @@ export default function MapScreen({ onBack }: { onBack: () => void }) {
         <p className="p-4 text-sm text-sky-200/80">No se pudo cargar el mapa.</p>
       )}
 
-      {ready && (
+      {ready && mode === "globe" && (
+        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-3">
+          <div className="aspect-square w-[min(92vw,420px)]">
+            <SpinningGlobe
+              geometries={geometries}
+              completed={completed}
+              interactive
+              selected={selected}
+              onSelect={(code) => setSelected(code && BY_CODE.has(code) ? code : null)}
+              className="block aspect-square w-full"
+            />
+          </div>
+          {!country && (
+            <p className="text-xs text-white/50">
+              Arrastra para girar · toca un país para ver su ficha
+            </p>
+          )}
+          {country && selected && (
+            <CountrySheet
+              country={country}
+              record={records[selected]}
+              onClose={() => setSelected(null)}
+            />
+          )}
+        </div>
+      )}
+
+      {ready && mode === "flat" && (
         <div className="relative min-h-0 flex-1">
           <div
             ref={box}
