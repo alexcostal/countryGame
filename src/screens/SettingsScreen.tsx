@@ -11,6 +11,64 @@ import {
 } from "@/game/storage"
 import type { Records } from "@/game/types"
 
+type UpdateResult = "reloading" | "latest" | "unsupported" | "offline"
+
+const PENDING_WAIT_MS = 20000
+const IDLE_WAIT_MS = 4000
+
+function checkForUpdate(): Promise<UpdateResult> {
+  return new Promise((resolve) => {
+    if (!("serviceWorker" in navigator)) {
+      resolve("unsupported")
+      return
+    }
+    if (!navigator.onLine) {
+      resolve("offline")
+      return
+    }
+    navigator.serviceWorker
+      .getRegistration()
+      .then((reg) => {
+        if (!reg) {
+          resolve("unsupported")
+          return
+        }
+        const onChange = () => {
+          resolve("reloading")
+          window.location.reload()
+        }
+        navigator.serviceWorker.addEventListener("controllerchange", onChange, {
+          once: true,
+        })
+        reg
+          .update()
+          .then(() => {
+            const pending = Boolean(reg.installing || reg.waiting)
+            window.setTimeout(
+              () => resolve("latest"),
+              pending ? PENDING_WAIT_MS : IDLE_WAIT_MS,
+            )
+          })
+          .catch(() => {
+            navigator.serviceWorker.removeEventListener(
+              "controllerchange",
+              onChange,
+            )
+            resolve("offline")
+          })
+      })
+      .catch(() => resolve("unsupported"))
+  })
+}
+
+const UPDATE_MESSAGES: Record<UpdateResult, string> = {
+  reloading: "Versión nueva encontrada. Recargando…",
+  latest: "Ya tienes la última versión.",
+  offline: "No se pudo comprobar. ¿Tienes conexión?",
+  unsupported:
+    "Aquí no hay modo sin conexión que actualizar. Funciona en la app publicada.",
+}
+
 const btn =
   "h-12 w-full rounded-xl bg-white/10 px-4 text-base font-semibold active:bg-white/20"
 const box =
@@ -24,6 +82,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
   const [importText, setImportText] = useState("")
   const [message, setMessage] = useState("")
   const [confirming, setConfirming] = useState(false)
+  const [checking, setChecking] = useState(false)
 
   const completed = completedCodes(records)
   const exportText = exportProgress(records)
@@ -66,6 +125,15 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
     setRecords({})
     setConfirming(false)
     setMessage("Progreso borrado. Ya puedes empezar de nuevo.")
+  }
+
+  async function update() {
+    if (checking) return
+    setChecking(true)
+    setMessage("Buscando una versión nueva…")
+    const result = await checkForUpdate()
+    setMessage(UPDATE_MESSAGES[result])
+    setChecking(false)
   }
 
   return (
@@ -192,6 +260,22 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
               </button>
             </div>
           )}
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <h2 className={title}>Actualizar la app</h2>
+          <p className="text-sm text-white/60">
+            Busca una versión nueva y recarga la app. Tu progreso no se borra.
+            Necesitas conexión.
+          </p>
+          <button
+            type="button"
+            onClick={update}
+            aria-busy={checking}
+            className={btn}
+          >
+            {checking ? "Buscando…" : "Buscar actualización"}
+          </button>
         </section>
 
         <p className="text-center text-xs text-white/40">
