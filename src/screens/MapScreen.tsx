@@ -7,6 +7,7 @@ import { SpinningGlobe } from "@/components/SpinningGlobe"
 import { WorldMap } from "@/components/WorldMap"
 import { completedCodes, loadRecords } from "@/game/storage"
 import { useGeometries } from "@/game/useGeometries"
+import { TripsPanel } from "@/components/TripsPanel"
 
 const OCEAN = "#cfe3f1"
 const MAP_W = 360
@@ -17,7 +18,7 @@ const TAP_PX = 8
 const TAP_MS = 500
 const BY_CODE = new Map(COUNTRIES.map((c) => [c.code, c]))
 
-type Mode = "globe" | "flat"
+type Mode = "globe" | "flat" | "trips"
 
 interface View {
   cx: number
@@ -248,6 +249,13 @@ export default function MapScreen({ onBack }: { onBack: () => void }) {
         >
           Globo
         </button>
+        <button
+          type="button"
+          onClick={() => switchMode("trips")}
+          className={tab(mode === "trips")}
+        >
+          Viajes
+        </button>
       </div>
 
       {geometries === null && (
@@ -331,6 +339,11 @@ export default function MapScreen({ onBack }: { onBack: () => void }) {
               onClose={() => setSelected(null)}
             />
           )}
+        </div>
+      )}
+      {ready && mode === "trips" && (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <TripsPanel geometries={geometries} />
         </div>
       )}
     </main>

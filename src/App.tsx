@@ -4,6 +4,7 @@ import Gallery from "@/screens/Gallery"
 import HomeScreen from "@/screens/HomeScreen"
 import MapScreen from "@/screens/MapScreen"
 import SettingsScreen from "@/screens/SettingsScreen"
+import ContinentLab from "@/screens/ContinentLab"
 
 type Screen = "home" | "game" | "settings" | "map"
 
@@ -16,6 +17,13 @@ export default function App() {
     new URLSearchParams(window.location.search).has("galeria")
   ) {
     return <Gallery />
+  }
+
+  if (
+    import.meta.env.DEV &&
+    new URLSearchParams(window.location.search).has("continentes")
+  ) {
+    return <ContinentLab />
   }
 
   if (screen === "game") {
