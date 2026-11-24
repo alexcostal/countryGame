@@ -1,10 +1,12 @@
 import { useRef, useState } from "react"
 import type { PointerEvent as RPointerEvent } from "react"
+import { Maximize2 } from "lucide-react"
 import { ContinentMap } from "@/components/ContinentMap"
 import type { Frame } from "@/data/continentFrames"
 import type { SphereShape } from "@/game/sphere"
 
 const TAP_PX = 10
+const LONG_PRESS_MS = 450
 const LABEL_MIN_TOP = 34
 
 interface Props {
@@ -15,6 +17,7 @@ interface Props {
   visited: ReadonlySet<string>
   names: Record<string, string>
   onToggle: (code: string) => void
+  onExpand?: () => void
 }
 
 interface Hover {
@@ -26,6 +29,7 @@ interface Hover {
 interface Press {
   x: number
   y: number
+  t: number
   code: string | null
   moved: boolean
 }
@@ -38,6 +42,7 @@ export function InteractiveContinentMap({
   visited,
   names,
   onToggle,
+  onExpand,
 }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const press = useRef<Press | null>(null)
@@ -66,6 +71,7 @@ export function InteractiveContinentMap({
     press.current = {
       x: e.clientX,
       y: e.clientY,
+      t: Date.now(),
       code: codeAt(e.clientX, e.clientY),
       moved: false,
     }
@@ -88,7 +94,9 @@ export function InteractiveContinentMap({
     const p = press.current
     press.current = null
     setHover(null)
-    if (p && !p.moved && p.code) onToggle(p.code)
+    if (p && !p.moved && p.code && Date.now() - p.t < LONG_PRESS_MS) {
+      onToggle(p.code)
+    }
   }
 
   function onCancel() {
@@ -105,35 +113,48 @@ export function InteractiveContinentMap({
   const labelY = hover ? Math.max(hover.y - 14, LABEL_MIN_TOP) : 0
 
   return (
-    <div
-      ref={box}
-      className="relative select-none [-webkit-touch-callout:none]"
-      style={{ touchAction: "pan-y" }}
-      onPointerDown={onDown}
-      onPointerMove={onMove}
-      onPointerUp={onUp}
-      onPointerCancel={onCancel}
-      onPointerLeave={onLeave}
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      <ContinentMap
-        shapes={shapes}
-        membership={membership}
-        continent={continent}
-        frame={frame}
-        visited={visited}
-        interactive
-        active={hover?.code ?? null}
-        className="aspect-[5/3] w-full rounded-xl"
-      />
-      {hover && (
-        <div
-          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white shadow-lg"
-          style={{ left: labelX, top: labelY }}
+    <div className="relative">
+      <div
+        ref={box}
+        className="relative select-none [-webkit-touch-callout:none]"
+        style={{ touchAction: "pan-y" }}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onCancel}
+        onPointerLeave={onLeave}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <ContinentMap
+          shapes={shapes}
+          membership={membership}
+          continent={continent}
+          frame={frame}
+          visited={visited}
+          interactive
+          active={hover?.code ?? null}
+          className="aspect-[5/3] w-full rounded-xl"
+        />
+        {hover && (
+          <div
+            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white shadow-lg"
+            style={{ left: labelX, top: labelY }}
+          >
+            {names[hover.code]}
+            {visited.has(hover.code) ? " ✓" : ""}
+          </div>
+        )}
+      </div>
+
+      {onExpand && (
+        <button
+          type="button"
+          onClick={onExpand}
+          className="absolute right-2 top-2 flex h-9 items-center gap-1.5 rounded-full bg-[#0e2250]/90 px-3 text-xs font-medium text-white active:bg-[#0e2250]"
         >
-          {names[hover.code]}
-          {visited.has(hover.code) ? " ✓" : ""}
-        </div>
+          <Maximize2 className="h-3.5 w-3.5" />
+          Ampliar
+        </button>
       )}
     </div>
   )

@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react"
+import { memo, useMemo, type Ref } from "react"
 import { geoDistance, geoMercator, geoPath } from "d3-geo"
 import type { MultiPoint } from "geojson"
 import type { Frame } from "@/data/continentFrames"
@@ -32,6 +32,7 @@ interface Props {
   variant?: "full" | "thumb"
   interactive?: boolean
   active?: string | null
+  svgRef?: Ref<SVGSVGElement>
   className?: string
 }
 
@@ -50,6 +51,7 @@ export const ContinentMap = memo(function ContinentMap({
   variant = "full",
   interactive = false,
   active = null,
+  svgRef,
   className,
 }: Props) {
   const w = variant === "thumb" ? 96 : 400
@@ -96,6 +98,7 @@ export const ContinentMap = memo(function ContinentMap({
 
   return (
     <svg
+      ref={svgRef}
       viewBox={`0 0 ${w} ${h}`}
       className={className}
       style={{ background: OCEAN }}
