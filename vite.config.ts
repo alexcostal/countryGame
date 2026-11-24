@@ -1,12 +1,25 @@
 import { fileURLToPath } from "node:url"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import { defineConfig, type Plugin} from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
 const buildDate = new Date()
   .toLocaleString("sv-SE", { timeZone: "Europe/Madrid" })
   .slice(0, 16)
+
+function emitVersion(version: string): Plugin {
+  return {
+    name: "emit-version",
+    generateBundle() {
+      this.emitFile({
+        type: "asset",
+        fileName: "version.json",
+        source: JSON.stringify({ version }),
+      })
+    },
+  }
+}
 
 export default defineConfig(({ command, isPreview }) => {
   const base = command === "build" || isPreview ? "/countryGame/" : "/"
@@ -17,6 +30,7 @@ export default defineConfig(({ command, isPreview }) => {
     plugins: [
       react(),
       tailwindcss(),
+      emitVersion(buildDate),
       VitePWA({
         registerType: "autoUpdate",
         manifest: {
@@ -43,6 +57,7 @@ export default defineConfig(({ command, isPreview }) => {
         },
         workbox: {
           globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2,json}"],
+          globIgnores: ["**/version.json"],
           maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
         },
       }),

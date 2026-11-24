@@ -11,54 +11,51 @@ import {
 } from "@/game/storage"
 import type { Records } from "@/game/types"
 
-type UpdateResult = "reloading" | "latest" | "unsupported" | "offline"
+type UpdateResult =
+  | "reloading"
+  | "latest"
+  | "unsupported"
+  | "offline"
+  | "error"
 
-const PENDING_WAIT_MS = 20000
-const IDLE_WAIT_MS = 4000
+async function checkForUpdate(onFound: () => void): Promise<UpdateResult> {
+  if (
+    import.meta.env.DEV ||
+    !("serviceWorker" in navigator) ||
+    !("caches" in window)
+  ) {
+    return "unsupported"
+  }
 
-function checkForUpdate(): Promise<UpdateResult> {
-  return new Promise((resolve) => {
-    if (!("serviceWorker" in navigator)) {
-      resolve("unsupported")
-      return
-    }
-    if (!navigator.onLine) {
-      resolve("offline")
-      return
-    }
-    navigator.serviceWorker
-      .getRegistration()
-      .then((reg) => {
-        if (!reg) {
-          resolve("unsupported")
-          return
-        }
-        const onChange = () => {
-          resolve("reloading")
-          window.location.reload()
-        }
-        navigator.serviceWorker.addEventListener("controllerchange", onChange, {
-          once: true,
-        })
-        reg
-          .update()
-          .then(() => {
-            const pending = Boolean(reg.installing || reg.waiting)
-            window.setTimeout(
-              () => resolve("latest"),
-              pending ? PENDING_WAIT_MS : IDLE_WAIT_MS,
-            )
-          })
-          .catch(() => {
-            navigator.serviceWorker.removeEventListener(
-              "controllerchange",
-              onChange,
-            )
-            resolve("offline")
-          })
-      })
-      .catch(() => resolve("unsupported"))
-  })
+  let latest: string
+  try {
+    const res = await fetch(
+      `${import.meta.env.BASE_URL}version.json?t=${Date.now()}`,
+      { cache: "no-store" },
+    )
+    if (!res.ok) return "error"
+    const data: unknown = await res.json().catch(() => null)
+    const v = (data as { version?: unknown } | null)?.version
+    if (typeof v !== "string") return "error"
+    latest = v
+  } catch {
+    return "offline"
+  }
+
+  if (latest === __APP_VERSION__) return "latest"
+
+  onFound()
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations()
+    await Promise.all(regs.map((r) => r.unregister()))
+    const keys = await caches.keys()
+    await Promise.all(keys.map((k) => caches.delete(k)))
+  } catch {
+    return "error"
+  }
+
+  window.location.replace(`${import.meta.env.BASE_URL}?v=${Date.now()}`)
+  return "reloading"
 }
 
 const UPDATE_MESSAGES: Record<UpdateResult, string> = {
@@ -67,6 +64,7 @@ const UPDATE_MESSAGES: Record<UpdateResult, string> = {
   offline: "No se pudo comprobar. ¿Tienes conexión?",
   unsupported:
     "Aquí no hay modo sin conexión que actualizar. Funciona en la app publicada.",
+  error: "No se pudo comprobar la versión. Inténtalo de nuevo en un rato.",
 }
 
 const btn =
@@ -131,9 +129,13 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
     if (checking) return
     setChecking(true)
     setMessage("Buscando una versión nueva…")
-    const result = await checkForUpdate()
-    setMessage(UPDATE_MESSAGES[result])
-    setChecking(false)
+    const result = await checkForUpdate(() =>
+      setMessage("Versión nueva encontrada. Descargándola…"),
+    )
+    if (result !== "reloading") {
+      setMessage(UPDATE_MESSAGES[result])
+      setChecking(false)
+    }
   }
 
   return (
