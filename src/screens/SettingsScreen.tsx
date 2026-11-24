@@ -283,7 +283,6 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
         <p className="text-center text-xs text-white/40">
           Versión {__APP_VERSION__}
         </p>
-        <p className="text-center text-xs text-[#7ee8b4]">Prueba de actualización 1</p>
       </div>
     </main>
   )
